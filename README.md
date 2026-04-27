@@ -49,7 +49,7 @@ Django + Strawberry（strawberry-graphql-django）を使い、GraphiQL を Swagg
 
 ---
 
-## GraphiQL の使い方（授業向け）
+## GraphiQLを動かすフロントの環境「GraphiQL」の使い方（授業向け）
 
 `http://localhost:8000/graphql/` にログイン済みの状態でアクセスすると GraphiQL が開きます。  
 画面には授業用の4ステップのサンプルクエリが初期表示されています。
