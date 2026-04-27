@@ -1,0 +1,120 @@
+{% extends "lunch/base.html" %}
+<!-- ファイルパス: lunch/templates/lunch/place_list.html -->
+
+{% block title %}昼食先を探す | LunchTime Review{% endblock %}
+
+{% block content %}
+<h2 class="mb-3">昼食先を探す</h2>
+
+<!-- 時間入力バー -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="row g-2 align-items-end">
+      <div class="col-sm-auto">
+        <label class="form-label mb-1">昼休み開始</label>
+        <input type="time" id="lunchStart" class="form-control" value="12:00">
+      </div>
+      <div class="col-sm-auto">
+        <label class="form-label mb-1">昼休み終了</label>
+        <input type="time" id="lunchEnd" class="form-control" value="13:00">
+      </div>
+      <div class="col-sm-auto">
+        <button class="btn btn-success" onclick="searchPlaces()">検索</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- カードリスト -->
+<div id="placeList" class="row g-3">
+  <div class="col-12 text-center text-muted py-5">
+    <div class="spinner-border text-success" role="status"></div>
+    <p class="mt-2">検索中...</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const GQL_LUNCH_PLACES = `
+  query GetLunchPlaces($lunchStart: Time!, $lunchEnd: Time!) {
+    lunchPlaces(lunchStart: $lunchStart, lunchEnd: $lunchEnd) {
+      id
+      name
+      location
+      lunchEndTime
+      estimatedTimeMinutes
+      averageRating
+      canMakeIt(lunchEnd: $lunchEnd)
+    }
+  }
+`;
+
+function toHHMMSS(hhmm) {
+  return hhmm.length === 5 ? hhmm + ':00' : hhmm;
+}
+
+function starHtml(avg) {
+  if (avg === null) return '<span class="text-muted small">レビューなし</span>';
+  const full = Math.round(avg);
+  return '★'.repeat(full) + '☆'.repeat(5 - full) +
+    ` <span class="small text-muted">${avg.toFixed(1)}</span>`;
+}
+
+function renderPlaces(places, lunchEnd) {
+  const container = document.getElementById('placeList');
+  if (places.length === 0) {
+    container.innerHTML = '<div class="col-12 text-center text-muted py-5">該当する昼食先がありません。</div>';
+    return;
+  }
+  container.innerHTML = places.map(p => {
+    const badge = p.canMakeIt
+      ? '<span class="badge bg-success badge-ok">✓ 間に合う</span>'
+      : '<span class="badge bg-danger badge-ng">✗ 難しい</span>';
+    const lunchEndParam = encodeURIComponent(lunchEnd);
+    return `
+      <div class="col-12 col-md-6 col-lg-4">
+        <a href="/places/${p.id}/?lunchEnd=${lunchEndParam}" class="text-decoration-none">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title">${p.name}</h5>
+              <p class="card-text text-muted small mb-2">${p.location}</p>
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                ${badge}
+                <span class="small">${starHtml(p.averageRating)}</span>
+              </div>
+              <div class="mt-2 small text-muted">
+                〜${p.lunchEndTime} &nbsp;/&nbsp; ${p.estimatedTimeMinutes}分
+              </div>
+            </div>
+          </div>
+        </a>
+      </div>
+    `;
+  }).join('');
+}
+
+async function searchPlaces() {
+  const lunchStart = toHHMMSS(document.getElementById('lunchStart').value);
+  const lunchEnd   = toHHMMSS(document.getElementById('lunchEnd').value);
+  document.getElementById('placeList').innerHTML = `
+    <div class="col-12 text-center text-muted py-5">
+      <div class="spinner-border text-success" role="status"></div>
+      <p class="mt-2">検索中...</p>
+    </div>`;
+  try {
+    const data = await gqlFetch(GQL_LUNCH_PLACES, { lunchStart, lunchEnd });
+    renderPlaces(data.lunchPlaces, lunchEnd);
+  } catch (e) {
+    const msg = e instanceof LoginRequiredError
+      ? `昼食先を表示するには<a href="/accounts/login/?next=/" class="alert-link">ログイン</a>が必要です。`
+      : `エラーが発生しました: ${e.message}`;
+    document.getElementById('placeList').innerHTML =
+      `<div class="col-12"><div class="alert alert-warning">${msg}</div></div>`;
+  }
+}
+
+// ページロード時に自動検索
+document.addEventListener('DOMContentLoaded', searchPlaces);
+</script>
+{% endblock %}

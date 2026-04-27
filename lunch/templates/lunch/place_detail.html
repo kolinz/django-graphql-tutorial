@@ -1,0 +1,139 @@
+{% extends "lunch/base.html" %}
+<!-- ファイルパス: lunch/templates/lunch/place_detail.html -->
+
+{% block title %}昼食先詳細 | LunchTime Review{% endblock %}
+
+{% block content %}
+<a href="/" class="btn btn-outline-secondary btn-sm mb-3">← 一覧へ</a>
+
+<div id="detailArea">
+  <div class="text-center text-muted py-5">
+    <div class="spinner-border text-success" role="status"></div>
+    <p class="mt-2">読み込み中...</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const PLACE_ID  = "{{ place_id }}";
+const LUNCH_END = "{{ lunch_end }}";
+
+const GQL_LUNCH_PLACE = `
+  query GetLunchPlace($id: ID!, $lunchEnd: Time!) {
+    lunchPlace(id: $id, lunchEnd: $lunchEnd) {
+      name
+      location
+      lunchEndTime
+      estimatedTimeMinutes
+      canMakeIt(lunchEnd: $lunchEnd)
+      averageRating
+      reviews {
+        rating
+        comment
+        author { username }
+        createdAt
+      }
+    }
+  }
+`;
+
+function toHHMMSS(t) {
+  return t && t.length === 5 ? t + ':00' : t || '13:00:00';
+}
+
+function starHtml(n) {
+  const full = Math.round(n || 0);
+  return '★'.repeat(full) + '☆'.repeat(5 - full);
+}
+
+async function loadDetail() {
+  const lunchEnd = toHHMMSS(LUNCH_END);
+  try {
+    const data = await gqlFetch(GQL_LUNCH_PLACE, { id: PLACE_ID, lunchEnd });
+    const p = data.lunchPlace;
+    if (!p) {
+      document.getElementById('detailArea').innerHTML =
+        '<div class="alert alert-warning">昼食先が見つかりませんでした。</div>';
+      return;
+    }
+
+    const badge = p.canMakeIt
+      ? '<span class="badge bg-success fs-6">✓ 間に合う</span>'
+      : '<span class="badge bg-danger fs-6">✗ 難しい</span>';
+
+    const avgStr = p.averageRating !== null
+      ? `${starHtml(p.averageRating)} ${p.averageRating.toFixed(1)}`
+      : 'レビューなし';
+
+    const reviewsHtml = p.reviews.length === 0
+      ? '<p class="text-muted">まだレビューがありません。</p>'
+      : p.reviews.map(r => `
+          <div class="card mb-2">
+            <div class="card-body py-2 px-3">
+              <div class="d-flex justify-content-between">
+                <span class="fw-bold">${starHtml(r.rating)} ${r.rating}★</span>
+                <span class="small text-muted">${r.author.username}</span>
+              </div>
+              <p class="mb-0 mt-1">${r.comment}</p>
+            </div>
+          </div>`).join('');
+
+    const isAuthenticated = {{ user.is_authenticated|yesno:"true,false" }};
+    const reviewBtn = isAuthenticated
+      ? `<a href="/places/${PLACE_ID}/review/?lunchEnd=${encodeURIComponent(LUNCH_END)}"
+            class="btn btn-success mt-3">レビューを投稿する</a>`
+      : '';
+
+    document.getElementById('detailArea').innerHTML = `
+      <h2 class="mb-3">${p.name}</h2>
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+          <div class="card text-center h-100">
+            <div class="card-body">
+              <div class="small text-muted">ランチ終了</div>
+              <div class="fw-bold">${p.lunchEndTime}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card text-center h-100">
+            <div class="card-body">
+              <div class="small text-muted">所要時間</div>
+              <div class="fw-bold">${p.estimatedTimeMinutes}分</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card text-center h-100">
+            <div class="card-body">
+              <div class="small text-muted">平均評価</div>
+              <div class="fw-bold">${avgStr}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card text-center h-100">
+            <div class="card-body">
+              <div class="small text-muted">今日の判定</div>
+              <div>${badge}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="text-muted"><i class="bi bi-geo-alt"></i> ${p.location}</p>
+
+      <h4 class="mt-4">レビュー一覧</h4>
+      ${reviewsHtml}
+      ${reviewBtn}
+    `;
+  } catch (e) {
+    document.getElementById('detailArea').innerHTML =
+      `<div class="alert alert-danger">エラー: ${e.message}</div>`;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadDetail);
+</script>
+{% endblock %}

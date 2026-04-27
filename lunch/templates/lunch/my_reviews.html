@@ -1,0 +1,73 @@
+{% extends "lunch/base.html" %}
+<!-- ファイルパス: lunch/templates/lunch/my_reviews.html -->
+
+{% block title %}マイレビュー | LunchTime Review{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">マイレビュー</h2>
+
+<div id="reviewList">
+  <div class="text-center text-muted py-5">
+    <div class="spinner-border text-success" role="status"></div>
+    <p class="mt-2">読み込み中...</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const GQL_MY_REVIEWS = `
+  query GetMyReviews {
+    myReviews {
+      id
+      rating
+      comment
+      createdAt
+      lunchPlace { name }
+    }
+  }
+`;
+
+function starHtml(n) {
+  return '★'.repeat(n) + '☆'.repeat(5 - n);
+}
+
+function formatDate(isoStr) {
+  if (!isoStr) return '';
+  return isoStr.slice(0, 10);
+}
+
+async function loadMyReviews() {
+  try {
+    const data = await gqlFetch(GQL_MY_REVIEWS);
+    const reviews = data.myReviews;
+    const container = document.getElementById('reviewList');
+
+    if (reviews.length === 0) {
+      container.innerHTML = '<p class="text-muted">まだレビューを投稿していません。</p>';
+      return;
+    }
+
+    container.innerHTML = reviews.map(r => `
+      <div class="card mb-3 shadow-sm">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <h5 class="card-title mb-1">${r.lunchPlace.name}</h5>
+            <span class="text-muted small">${formatDate(r.createdAt)}</span>
+          </div>
+          <div class="mb-2 text-warning">${starHtml(r.rating)}
+            <span class="text-dark small ms-1">${r.rating}★</span>
+          </div>
+          <p class="card-text mb-0">${r.comment}</p>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    document.getElementById('reviewList').innerHTML =
+      `<div class="alert alert-danger">エラー: ${e.message}</div>`;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadMyReviews);
+</script>
+{% endblock %}

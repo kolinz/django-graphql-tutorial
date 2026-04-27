@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<!-- ファイルパス: lunch/templates/lunch/base.html -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>{% block title %}LunchTime Review{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { padding-top: 56px; }
+    .badge-ok   { font-size: .85rem; }
+    .badge-ng   { font-size: .85rem; }
+    .star-rating .btn-check:checked + .btn { color: #ffc107; }
+  </style>
+</head>
+<body>
+
+<!-- ナビバー -->
+<nav class="navbar navbar-expand-md navbar-dark bg-success fixed-top">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="{% url 'lunch:place_list' %}">🍱 LunchTime Review</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'lunch:place_list' %}">昼食先を探す</a>
+        </li>
+        {% if user.is_authenticated %}
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'lunch:place_form' %}">昼食先を登録する</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'lunch:my_reviews' %}">マイレビュー</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/graphql/">GraphiQL</a>
+        </li>
+        {% endif %}
+      </ul>
+      <ul class="navbar-nav ms-auto">
+        {% if user.is_authenticated %}
+        <li class="nav-item">
+          <span class="navbar-text me-3">ログイン中：{{ user.username }}</span>
+        </li>
+        <li class="nav-item">
+          <form method="post" action="{% url 'logout' %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-light btn-sm">ログアウト</button>
+          </form>
+        </li>
+        {% else %}
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'login' %}">ログイン</a>
+        </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- メインコンテンツ -->
+<main class="container py-4">
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {% block content %}{% endblock %}
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- 共通 GraphQL fetch ユーティリティ -->
+<script>
+/**
+ * gqlFetch(query, variables)
+ * GraphQL エンドポイント /graphql/ に fetch でリクエストを送る共通関数。
+ * CSRF トークンは <meta name="csrf-token"> から取得する。
+ *
+ * @param {string} query     - GraphQL クエリ文字列
+ * @param {Object} variables - GraphQL 変数オブジェクト（省略可）
+ * @returns {Promise<Object>} - レスポンスの data フィールド
+ */
+// ログイン未済を示す専用エラークラス
+class LoginRequiredError extends Error {
+  constructor() {
+    super('ログインが必要です。');
+    this.name = 'LoginRequiredError';
+  }
+}
+
+async function gqlFetch(query, variables = {}) {
+  const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+  const response = await fetch('/graphql/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken,
+    },
+    body: JSON.stringify({ query, variables }),
+  });
+
+  // HTML が返ってきた場合はログインページへのリダイレクトとみなす
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('text/html')) {
+    throw new LoginRequiredError();
+  }
+
+  if (!response.ok) {
+    throw new Error(`サーバーエラーが発生しました（HTTP ${response.status}）。`);
+  }
+
+  const json = await response.json();
+  if (json.errors && json.errors.length > 0) {
+    throw new Error(json.errors.map(e => e.message).join('\n'));
+  }
+  return json.data;
+}
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

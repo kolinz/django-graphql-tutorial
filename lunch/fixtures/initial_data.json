@@ -1,0 +1,138 @@
+[
+  {
+    "model": "auth.user",
+    "pk": 1,
+    "fields": {
+      "username": "admin",
+      "email": "admin@example.com",
+      "password": "pbkdf2_sha256$1000000$YuAW38ezJAFF6hcyTTJvZb$mceC2qIqfnBC5WBacODfkfAtD20k5PmP5wQ3R6o3gno=",
+      "first_name": "管理",
+      "last_name": "太郎",
+      "is_staff": true,
+      "is_superuser": true,
+      "is_active": true,
+      "date_joined": "2024-04-01T00:00:00Z",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 2,
+    "fields": {
+      "username": "tanaka",
+      "email": "tanaka@example.com",
+      "password": "pbkdf2_sha256$1000000$lg61f1Ol5gWvWYwa7byrVK$bYNnSeHAJwBWFQXhOygayoYyoHhMUDQ3ypBiyT8cuOM=",
+      "first_name": "花子",
+      "last_name": "田中",
+      "is_staff": false,
+      "is_superuser": false,
+      "is_active": true,
+      "date_joined": "2024-04-01T00:00:00Z",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 3,
+    "fields": {
+      "username": "yamada",
+      "email": "yamada@example.com",
+      "password": "pbkdf2_sha256$1000000$lg61f1Ol5gWvWYwa7byrVK$bYNnSeHAJwBWFQXhOygayoYyoHhMUDQ3ypBiyT8cuOM=",
+      "first_name": "次郎",
+      "last_name": "山田",
+      "is_staff": false,
+      "is_superuser": false,
+      "is_active": true,
+      "date_joined": "2024-04-01T00:00:00Z",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "lunch.lunchplace",
+    "pk": 1,
+    "fields": {
+      "name": "学食 A棟",
+      "location": "キャンパス内 北館1F",
+      "lunch_end_time": "13:30:00",
+      "estimated_time_minutes": 20,
+      "is_approved": true,
+      "created_by": 1,
+      "created_at": "2024-04-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "lunch.lunchplace",
+    "pk": 2,
+    "fields": {
+      "name": "ラーメン 龍",
+      "location": "大学正門から徒歩5分",
+      "lunch_end_time": "13:00:00",
+      "estimated_time_minutes": 35,
+      "is_approved": true,
+      "created_by": 1,
+      "created_at": "2024-04-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "lunch.lunchplace",
+    "pk": 3,
+    "fields": {
+      "name": "カフェ サンライズ",
+      "location": "キャンパス南口 徒歩3分",
+      "lunch_end_time": "14:00:00",
+      "estimated_time_minutes": 25,
+      "is_approved": true,
+      "created_by": 1,
+      "created_at": "2024-04-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "lunch.lunchplace",
+    "pk": 4,
+    "fields": {
+      "name": "定食屋 みなみ",
+      "location": "駅前商店街",
+      "lunch_end_time": "13:30:00",
+      "estimated_time_minutes": 50,
+      "is_approved": false,
+      "created_by": 2,
+      "created_at": "2024-04-02T00:00:00Z"
+    }
+  },
+  {
+    "model": "lunch.review",
+    "pk": 1,
+    "fields": {
+      "author": 2,
+      "lunch_place": 1,
+      "rating": 4,
+      "comment": "値段が安くて量も多くて満足です。混む時間帯は少し待ちます。",
+      "created_at": "2024-04-05T12:30:00Z"
+    }
+  },
+  {
+    "model": "lunch.review",
+    "pk": 2,
+    "fields": {
+      "author": 3,
+      "lunch_place": 1,
+      "rating": 5,
+      "comment": "キャンパス内なので移動が楽。日替わり定食がおすすめ！",
+      "created_at": "2024-04-06T12:45:00Z"
+    }
+  },
+  {
+    "model": "lunch.review",
+    "pk": 3,
+    "fields": {
+      "author": 2,
+      "lunch_place": 2,
+      "rating": 4,
+      "comment": "ラーメンが美味しい。ただ昼は混むので少し早めに行くのがコツ。",
+      "created_at": "2024-04-07T12:15:00Z"
+    }
+  }
+]

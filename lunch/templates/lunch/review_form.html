@@ -1,0 +1,93 @@
+{% extends "lunch/base.html" %}
+<!-- ファイルパス: lunch/templates/lunch/review_form.html -->
+
+{% block title %}レビューを投稿 | LunchTime Review{% endblock %}
+
+{% block content %}
+<h2 class="mb-1">レビューを投稿</h2>
+<p class="text-muted mb-4">{{ place_name }}</p>
+
+<div class="row justify-content-center">
+  <div class="col-12 col-md-8 col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+
+        <!-- 評価 -->
+        <div class="mb-3">
+          <label class="form-label fw-bold">評価</label>
+          <div class="d-flex gap-2" id="starButtons">
+            {% for i in "12345" %}
+            <div>
+              <input type="radio" class="btn-check" name="rating" id="star{{ i }}" value="{{ i }}" autocomplete="off">
+              <label class="btn btn-outline-warning" for="star{{ i }}">★{{ i }}</label>
+            </div>
+            {% endfor %}
+          </div>
+          <div id="ratingError" class="text-danger small mt-1 d-none">評価を選択してください。</div>
+        </div>
+
+        <!-- コメント -->
+        <div class="mb-3">
+          <label for="comment" class="form-label fw-bold">コメント</label>
+          <textarea id="comment" class="form-control" rows="4" placeholder="感想を入力してください"></textarea>
+          <div id="commentError" class="text-danger small mt-1 d-none">コメントを入力してください。</div>
+        </div>
+
+        <div id="formMsg"></div>
+
+        <div class="d-flex gap-2">
+          <button class="btn btn-success" id="submitBtn" onclick="submitReview()">投稿する</button>
+          <a href="/places/{{ place_id }}/" class="btn btn-outline-secondary">キャンセル</a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const PLACE_ID = "{{ place_id }}";
+
+const GQL_CREATE_REVIEW = `
+  mutation CreateReview($lunchPlaceId: ID!, $rating: Int!, $comment: String!) {
+    createReview(lunchPlaceId: $lunchPlaceId, rating: $rating, comment: $comment) {
+      id
+    }
+  }
+`;
+
+async function submitReview() {
+  const ratingEl = document.querySelector('input[name="rating"]:checked');
+  const comment  = document.getElementById('comment').value.trim();
+  let valid = true;
+
+  document.getElementById('ratingError').classList.toggle('d-none', !!ratingEl);
+  document.getElementById('commentError').classList.toggle('d-none', !!comment);
+  if (!ratingEl) valid = false;
+  if (!comment)  valid = false;
+  if (!valid) return;
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '送信中...';
+
+  try {
+    await gqlFetch(GQL_CREATE_REVIEW, {
+      lunchPlaceId: PLACE_ID,
+      rating: parseInt(ratingEl.value),
+      comment,
+    });
+    document.getElementById('formMsg').innerHTML =
+      '<div class="alert alert-success">レビューを投稿しました！</div>';
+    setTimeout(() => { location.href = `/places/${PLACE_ID}/`; }, 1200);
+  } catch (e) {
+    document.getElementById('formMsg').innerHTML =
+      `<div class="alert alert-danger">エラー: ${e.message}</div>`;
+    btn.disabled = false;
+    btn.textContent = '投稿する';
+  }
+}
+</script>
+{% endblock %}

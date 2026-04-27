@@ -1,0 +1,106 @@
+{% extends "lunch/base.html" %}
+<!-- ファイルパス: lunch/templates/lunch/place_form.html -->
+
+{% block title %}昼食先を登録 | LunchTime Review{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">昼食先を登録</h2>
+
+<div class="row justify-content-center">
+  <div class="col-12 col-md-8 col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+
+        <div class="mb-3">
+          <label for="name" class="form-label fw-bold">店名 <span class="text-danger">*</span></label>
+          <input type="text" id="name" class="form-control" placeholder="例：学食 A棟">
+        </div>
+
+        <div class="mb-3">
+          <label for="location" class="form-label fw-bold">場所 <span class="text-danger">*</span></label>
+          <input type="text" id="location" class="form-control" placeholder="例：キャンパス内 北館1F">
+        </div>
+
+        <div class="mb-3">
+          <label for="lunchEndTime" class="form-label fw-bold">ランチ提供終了時刻 <span class="text-danger">*</span></label>
+          <input type="time" id="lunchEndTime" class="form-control" value="13:30">
+        </div>
+
+        <div class="mb-3">
+          <label for="estimatedTime" class="form-label fw-bold">平均所要時間（分） <span class="text-danger">*</span></label>
+          <input type="number" id="estimatedTime" class="form-control" min="1" placeholder="例：20">
+        </div>
+
+        <div class="alert alert-info small mb-3">
+          ※ 管理者以外の登録は承認後に公開されます。
+        </div>
+
+        <div id="formMsg"></div>
+
+        <div class="d-flex gap-2">
+          <button class="btn btn-success" id="submitBtn" onclick="submitPlace()">登録する</button>
+          <a href="/" class="btn btn-outline-secondary">キャンセル</a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const GQL_CREATE_PLACE = `
+  mutation CreateLunchPlace(
+    $name: String!, $location: String!,
+    $lunchEndTime: Time!, $estimatedTimeMinutes: Int!
+  ) {
+    createLunchPlace(
+      name: $name, location: $location,
+      lunchEndTime: $lunchEndTime, estimatedTimeMinutes: $estimatedTimeMinutes
+    ) {
+      id
+      name
+    }
+  }
+`;
+
+function toHHMMSS(t) {
+  return t.length === 5 ? t + ':00' : t;
+}
+
+async function submitPlace() {
+  const name          = document.getElementById('name').value.trim();
+  const location      = document.getElementById('location').value.trim();
+  const lunchEndTime  = toHHMMSS(document.getElementById('lunchEndTime').value);
+  const estimatedTime = parseInt(document.getElementById('estimatedTime').value);
+
+  if (!name || !location || !lunchEndTime || isNaN(estimatedTime)) {
+    document.getElementById('formMsg').innerHTML =
+      '<div class="alert alert-warning">すべての項目を入力してください。</div>';
+    return;
+  }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '送信中...';
+
+  try {
+    const data = await gqlFetch(GQL_CREATE_PLACE, {
+      name,
+      location,
+      lunchEndTime,
+      estimatedTimeMinutes: estimatedTime,
+    });
+    document.getElementById('formMsg').innerHTML =
+      '<div class="alert alert-success">登録しました！承認後に公開されます。</div>';
+    setTimeout(() => { location.href = '/'; }, 1500);
+  } catch (e) {
+    document.getElementById('formMsg').innerHTML =
+      `<div class="alert alert-danger">エラー: ${e.message}</div>`;
+    btn.disabled = false;
+    btn.textContent = '登録する';
+  }
+}
+</script>
+{% endblock %}
