@@ -534,3 +534,50 @@ lunchtime_review/
 | `.gitignore` に `venv/` を追加 | 仮想環境は各自で作成するため |
 | `env.example` をコミット | 環境変数の雛形として共有 |
 | `README.md` にセットアップ手順を記載 | clone 後の手順（.env 作成・pip install・migrate・loaddata）を記載 |
+
+---
+
+## GitHub へのファイル追加・更新手順
+
+> ⚠️ **GitHub へのファイル追加・更新は必ずターミナルの git コマンドで行ってください。**  
+> GitHub のブラウザ画面からファイルをアップロードすると `.gitignore` が無視され、
+> `db.sqlite3` や `.env` などの除外すべきファイルが誤って公開されます。
+
+### 初回：リモートリポジトリと接続して push する
+
+GitHub でリポジトリを作成したら、WSL のターミナルで以下を実行します。
+
+```bash
+cd ~/lunchtime_review
+git init
+git add .
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin https://github.com/<ユーザー名>/<リポジトリ名>.git
+git push -u origin main
+```
+
+> 💡 `git add .` を実行すると `.gitignore` に記載されたファイルは自動的に除外されます。
+> `git add .` の前に `git status` を実行して、追加されるファイルを確認する習慣をつけてください。
+
+### 2回目以降：ファイルを更新して push する
+
+```bash
+cd ~/lunchtime_review
+git add .
+git status        # 追加・変更されるファイルを確認する
+git commit -m "変更内容の説明"
+git push
+```
+
+### 誤って不要なファイルを push してしまった場合
+
+`db.sqlite3` などを誤って push してしまった場合は以下で取り消します。
+
+```bash
+git rm --cached db.sqlite3
+git commit -m "Remove db.sqlite3 from tracking"
+git push
+```
+
+> ⚠️ `git rm --cached` はリポジトリからの追跡を外すだけで、ローカルのファイルは削除されません。
