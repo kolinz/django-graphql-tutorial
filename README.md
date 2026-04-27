@@ -145,6 +145,18 @@ lunchtime_review/
 ```
 ---
 
+## SDD（仕様駆動開発）のためのドキュメント
+
+このアプリケーションは、SDD（仕様駆動開発）により開発しています。SDDのための各種ドキュメントは下記になります。
+
+| ドキュメント | 説明 |
+|---|---|
+| [システム仕様書](docs/SDD_LunchTimeReview_v3_4.md) | アーキテクチャ・データモデル・API・画面仕様の全詳細 |
+| [実装プロンプト集](docs/LunchTimeReview_ImplementationPrompts_v3_4.md) | AI コーディングアシスタント向け実装プロンプト |
+| [プロジェクトプロンプト](docs/LunchTimeReview_ProjectPrompt_v3_4.md) | 生成AIで実装する際に用いるシステムプロンプトのこと |
+
+---
+
 ## ライセンス
 
-MIT License
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
