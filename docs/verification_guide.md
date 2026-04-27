@@ -1,3 +1,5 @@
+[トップに戻る](https://github.com/kolinz/django-graphql-tutorial/)
+
 # LunchTime Review 動作確認手順書
 
 本手順書は **LunchTime Review** の動作確認を行うための手順書です。  
